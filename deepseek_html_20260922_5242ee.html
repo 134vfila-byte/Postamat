@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Постамат</title>
+<style>
+  :root{
+    --bg:#0e1116;
+    --panel:#161b22;
+    --accent:#3b82f6;
+    --ok:#22c55e;
+    --danger:#ef4444;
+    --text:#e6edf3;
+    --muted:#8b949e;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #1b2a4a 0%, var(--bg) 60%);
+    color:var(--text);
+    min-height:100vh;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- Шапка ---------- */
+  header{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 24px;
+    border-bottom:1px solid #232b36;
+    background: rgba(13,17,23,.65);
+    backdrop-filter: blur(8px);
+  }
+  .logo{font-weight:800; letter-spacing:4px; font-size:18px; color:#9dc0ff;}
+  .btn-reception{
+    display:flex; align-items:center; gap:8px;
+    padding:11px 18px; font-size:15px; font-weight:600;
+    color:#cfe3ff; background:#182233;
+    border:1px solid #2b3d5c; border-radius:10px;
+    cursor:pointer; transition:.15s;
+  }
+  .btn-reception:hover{background:#1f2c42; border-color:#3b82f6;}
+
+  /* ---------- Главный экран ---------- */
+  main{
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:16px; padding:40px 20px; text-align:center;
+  }
+  main h1{margin:0; font-size:32px; font-weight:700;}
+  main p{margin:0; color:var(--muted); font-size:16px;}
+
+  .card{
+    width:min(480px,100%);
+    background:var(--panel);
+    border:1px solid #262e3a;
+    border-radius:var(--radius);
+    padding:28px;
+    box-shadow:0 24px 60px rgba(0,0,0,.45);
+  }
+
+  input{
+    width:100%; padding:14px 16px;
+    font-size:22px; letter-spacing:3px; text-align:center;
+    background:#0d1117; border:1px solid #30363d;
+    border-radius:10px; color:var(--text);
+    outline:none; transition:.15s; font-family: inherit;
+  }
+  input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,.2);}
+  input::placeholder{letter-spacing:1px; color:#4a5563; font-size:16px;}
+
+  .btn{
+    width:100%; padding:15px 20px;
+    font-size:17px; font-weight:600;
+    border-radius:10px; border:none; cursor:pointer;
+    transition:.15s; font-family: inherit; margin-top:14px;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:hover{background:#2f74e0;}
+  .btn-ok{background:var(--ok); color:#06240f;}
+  .btn-ok:hover{background:#1cae51;}
+  .btn-ghost{background:transparent; border:1px solid #30363d; color:var(--muted);}
+  .btn-ghost:hover{color:var(--text); border-color:#4a5563;}
+  .btn-scan{
+    background:#1f3a5f; color:#cfe3ff; border:1px solid #2b5183;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-scan:hover{background:#274a75;}
+
+  .msg{min-height:22px; margin-top:12px; font-size:15px; font-weight:600;}
+  .msg.error{color:var(--danger);}
+  .msg.ok{color:var(--ok);}
+
+  /* ---------- Модальные окна ---------- */
+  .modal{
+    position:fixed; inset:0;
+    background:rgba(5,8,12,.78);
+    backdrop-filter: blur(3px);
+    display:none; align-items:center; justify-content:center;
+    padding:20px; z-index:50;
+    animation: fade .18s ease;
+  }
+  .modal.open{display:flex;}
+  @keyframes fade{from{opacity:0} to{opacity:1}}
+
+  .modal-box{
+    width:min(460px,100%);
+    background:var(--panel);
+    border:1px solid #2a3441;
+    border-radius:var(--radius);
+    padding:28px;
+    box-shadow:0 30px 90px rgba(0,0,0,.7);
+    animation: pop .2s ease;
+  }
+  @keyframes pop{from{transform:scale(.96); opacity:0} to{transform:scale(1); opacity:1}}
+
+  .modal-box h2{margin:0 0 8px; font-size:22px;}
+  .modal-box .sub{margin:0 0 20px; color:var(--muted); font-size:14px;}
+
+  .code-display{
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size:30px; letter-spacing:4px; font-weight:700;
+    color:#7ee787; background:#0d1117;
+    border:1px dashed #30363d; border-radius:12px;
+    padding:20px 12px; margin:18px 0 6px;
+    user-select:all; text-align:center; word-break:break-word;
+  }
+
+  .barcode-preview{
+    background:#fff; border-radius:10px;
+    padding:12px 8px; margin:12px 0 4px;
+    display:flex; justify-content:center; align-items:center;
+    min-height:80px;
+  }
+  .barcode-preview svg{max-width:100%; height:auto;}
+
+  .big-icon{font-size:64px; line-height:1; text-align:center; margin-bottom:10px;}
+  .center{text-align:center;}
+  .row{display:flex; gap:12px; margin-top:14px;}
+  .row .btn{margin-top:0;}
+
+  /* Камера сканера */
+  #reader{width:100%; border-radius:10px; overflow:hidden; background:#000;}
+  #reader video{border-radius:10px;}
+  #scanHint{
+    color:var(--muted); font-size:13px; margin-top:10px; text-align:center;
+  }
+
+  /* ---------- Область печати чека ---------- */
+  #printArea{display:none;}
+
+  @media print{
+    body{background:#fff !important; color:#000 !important; display:block;}
+    body > *{display:none !important;}
+    #printArea{
+      display:block !important;
+      color:#000; background:#fff;
+      font-family: "Courier New", monospace;
+      font-size:14px; padding:10px;
+      width:80mm;
+    }
+    #printArea .line{border-top:1px dashed #000; margin:8px 0;}
+    #printArea .big{font-size:18px; font-weight:bold; letter-spacing:2px;}
+    #printArea .center{text-align:center;}
+    #printArea svg{display:block; margin:6px auto;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ПОСТАМАТ</div>
+  <button class="btn-reception" id="btnReception">⚙ Режим приёмки</button>
+</header>
+
+<main>
+  <div class="card">
+    <h1>Получение</h1>
+    <p style="margin-bottom:20px;">Введите код из СМС</p>
+    <form id="pickupForm" autocomplete="off">
+      <input id="pickupInput" type="text" inputmode="text"
+             placeholder="0000 0000 * 0000" maxlength="17">
+      <button class="btn btn-primary" type="submit">Получить посылку</button>
+    </form>
+    <div class="msg" id="pickupMsg"></div>
+  </div>
+</main>
+
+<!-- ===== Модалка: ПИН-код ===== -->
+<div class="modal" id="pinModal">
+  <div class="modal-box">
+    <h2>Режим приёмки</h2>
+    <p class="sub">Введите ПИН-код сотрудника</p>
+    <form id="pinForm" autocomplete="off">
+      <input id="pinInput" type="password" inputmode="numeric"
+             placeholder="••••" maxlength="4">
+      <div class="msg error" id="pinMsg"></div>
+      <div class="row">
+        <button class="btn btn-ghost" type="button" data-close>Отмена</button>
+        <button class="btn btn-primary" type="submit">Войти</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Модалка: Код этикетки ===== -->
+<div class="modal" id="labelModal">
+  <div class="modal-box">
+    <h2>Приёмка отправления</h2>
+    <p class="sub">Отсканируйте или введите код с этикетки</p>
+    <form id="labelForm" autocomplete="off">
+      <input id="labelInput" type="text" placeholder="Код этикетки">
+      <button class="btn btn-scan" type="button" id="btnScanLabel">📷 Сканировать штрихкод</button>
+      <div class="msg error" id="labelMsg"></div>
+      <div class="row">
+        <button class="btn btn-ghost" type="button" data-close>Отмена</button>
+        <button class="btn btn-primary" type="submit">Сгенерировать код</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Модалка: Сканер ===== -->
+<div class="modal" id="scanModal">
+  <div class="modal-box">
+    <h2>Сканирование штрихкода</h2>
+    <p class="sub">Наведите камеру на штрихкод или QR-код этикетки</p>
+    <div id="reader"></div>
+    <div id="scanHint">Поддерживаются Code128, EAN-13, QR и другие форматы</div>
+    <div class="msg error" id="scanMsg"></div>
+    <div class="row">
+      <button class="btn btn-ghost" type="button" id="btnScanCancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Модалка: Результат генерации ===== -->
+<div class="modal" id="resultModal">
+  <div class="modal-box">
+    <h2>Код выдачи</h2>
+    <p class="sub">Сообщите этот код получателю</p>
+    <div class="code-display" id="resultCode"></div>
+    <div class="barcode-preview" id="resultBarcode"></div>
+    <div class="row">
+      <button class="btn btn-ghost" type="button" id="btnCopy">Скопировать</button>
+      <button class="btn btn-ok" type="button" data-close>Готово</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Модалка: Отдайте чек ===== -->
+<div class="modal" id="giveModal">
+  <div class="modal-box center">
+    <div class="big-icon">🧾</div>
+    <h2>Отдайте чек работнику</h2>
+    <p class="sub" id="giveSub">Чек напечатан. Заберите посылку и передайте чек сотруднику.</p>
+    <div class="row">
+      <button class="btn btn-ghost" type="button" id="btnReprint">Печать повторно</button>
+      <button class="btn btn-ok" type="button" data-close>Завершить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Область печати ===== -->
+<div id="printArea"></div>
+
+<!-- ===== Внешние библиотеки ===== -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+/* =========================================================
+   УТИЛИТЫ
+   ========================================================= */
+const $  = s => document.querySelector(s);
+
+const DB_KEY  = 'postamat_db_v1';
+const LOG_KEY = 'postamat_log_v1';
+
+const loadDB  = () => { try { return JSON.parse(localStorage.getItem(DB_KEY))  || {}; } catch { return {}; } };
+const saveDB  = db => localStorage.setItem(DB_KEY, JSON.stringify(db));
+const loadLog = () => { try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch { return []; } };
+const saveLog = l  => localStorage.setItem(LOG_KEY, JSON.stringify(l));
+
+const digitsOnly = s => (s || '').replace(/\D/g, '');
+const formatCode = d => `${d.slice(0,4)} ${d.slice(4,8)} * ${d.slice(8,12)}`;
+
+function generateUniqueCode(db){
+  let code;
+  do {
+    code = '';
+    for (let i = 0; i < 12; i++) code += Math.floor(Math.random() * 10);
+  } while (db[code]);
+  return code;
+}
+
+function openModal(sel){  $(sel).classList.add('open');  }
+function closeModal(sel){ $(sel).classList.remove('open'); }
+
+// Закрытие по кнопкам [data-close]. Если закрывается сканер — глушим камеру.
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-close]');
+  if (!btn) return;
+  const modal = btn.closest('.modal');
+  if (modal && modal.id === 'scanModal') stopScanner();
+  modal.classList.remove('open');
+});
+
+/* =========================================================
+   ГЕНЕРАЦИЯ ШТРИХКОДА (JsBarcode)
+   ========================================================= */
+/**
+ * Отрисовывает штрихкод Code128 внутри указанного контейнера.
+ * @param {HTMLElement|string} container — элемент или селектор
+ * @param {string} value — значение (только латиница/цифры для Code128)
+ */
+function renderBarcode(container, value){
+  const el = typeof container === 'string' ? $(container) : container;
+  if (!el) return;
+  el.innerHTML = '';
+
+  if (typeof JsBarcode !== 'function') {
+    el.innerHTML = '<div style="color:#000;font:12px monospace;">[Штрихкод недоступен: библиотека не загружена]</div>';
+    return;
+  }
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  el.appendChild(svg);
+
+  try {
+    JsBarcode(svg, value, {
+      format: 'CODE128',
+      width: 2,
+      height: 60,
+      displayValue: true,
+      fontSize: 14,
+      margin: 4,
+      background: '#ffffff',
+      lineColor: '#000000'
+    });
+  } catch (err) {
+    console.warn('Ошибка генерации штрихкода:', err);
+    el.innerHTML = '<div style="color:#000;font:12px monospace;">[Не удалось построить штрихкод]</div>';
+  }
+}
+
+/* =========================================================
+   СКАНЕР ШТРИХКОДОВ (html5-qrcode)
+   ========================================================= */
+let qrScanner = null;
+
+async function startScanner(){
+  $('#scanMsg').textContent = '';
+  $('#scanMsg').className = 'msg error';
+  openModal('#scanModal');
+
+  if (typeof Html5Qrcode !== 'function') {
+    $('#scanMsg').textContent = 'Библиотека сканера не загружена. Проверьте интернет.';
+    return;
+  }
+
+  // Останавливаем предыдущий, если остался
+  await stopScanner();
+
+  qrScanner = new Html5Qrcode('reader', { verbose: false });
+
+  try {
+    await qrScanner.start(
+      { facingMode: 'environment' },   // задняя камера на мобиле
+      {
+        fps: 10,
+        qrbox: (w, h) => {
+          // Узкая широкая рамка — оптимально для 1D-штрихкодов
+          const width  = Math.min(w - 40, 400);
+          const height = Math.min(h - 40, 180);
+          return { width, height };
+        },
+        aspectRatio: 1.6
+      },
+      onScanSuccess,
+      () => { /* покадровые ошибки распознавания игнорируем */ }
+    );
+  } catch (err) {
+    console.error(err);
+    $('#scanMsg').textContent =
+      'Не удалось включить камеру. Разрешите доступ или используйте ввод вручную.';
+  }
+}
+
+function onScanSuccess(decodedText){
+  $('#labelInput').value = decodedText;
+  stopScanner();
+  closeModal('#scanModal');
+  $('#labelMsg').textContent = '';
+  // Небольшая подсветка — что код подставлен
+  $('#labelInput').focus();
+}
+
+async function stopScanner(){
+  if (!qrScanner) return;
+  try { await qrScanner.stop(); } catch (e) { /* уже остановлен */ }
+  try { await qrScanner.clear(); } catch (e) { /* нет контейнера */ }
+  qrScanner = null;
+}
+
+$('#btnScanLabel').addEventListener('click', startScanner);
+$('#btnScanCancel').addEventListener('click', async () => {
+  await stopScanner();
+  closeModal('#scanModal');
+});
+
+/* =========================================================
+   ПИН-КОД
+   ========================================================= */
+const PIN_CODE = '1488';
+
+$('#btnReception').addEventListener('click', () => {
+  $('#pinInput').value = '';
+  $('#pinMsg').textContent = '';
+  openModal('#pinModal');
+  setTimeout(() => $('#pinInput').focus(), 50);
+});
+
+$('#pinForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const val = digitsOnly($('#pinInput').value);
+  if (val !== PIN_CODE) {
+    $('#pinMsg').textContent = 'Неверный ПИН-код';
+    $('#pinInput').value = '';
+    $('#pinInput').focus();
+    return;
+  }
+  closeModal('#pinModal');
+  $('#labelInput').value = '';
+  $('#labelMsg').textContent = '';
+  openModal('#labelModal');
+  setTimeout(() => $('#labelInput').focus(), 50);
+});
+
+/* =========================================================
+   ПРИЁМКА: код с этикетки -> генерация кода выдачи
+   ========================================================= */
+let lastGenerated = null;
+
+$('#labelForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const label = $('#labelInput').value.trim();
+
+  if (label.length < 3) {
+    $('#labelMsg').textContent = 'Введите или отсканируйте код с этикетки';
+    return;
+  }
+
+  const db = loadDB();
+  const code = generateUniqueCode(db);
+
+  db[code] = { label, created: new Date().toISOString() };
+  saveDB(db);
+
+  const log = loadLog();
+  log.push({ type: 'in', code, label, date: new Date().toISOString() });
+  saveLog(log);
+
+  lastGenerated = code;
+  $('#resultCode').textContent = formatCode(code);
+
+  // Показываем штрихкод в окне результата
+  renderBarcode('#resultBarcode', code);
+
+  closeModal('#labelModal');
+  openModal('#resultModal');
+});
+
+$('#btnCopy').addEventListener('click', async () => {
+  if (!lastGenerated) return;
+  const text = formatCode(lastGenerated);
+  try {
+    await navigator.clipboard.writeText(text);
+    $('#btnCopy').textContent = 'Скопировано ✓';
+    setTimeout(() => $('#btnCopy').textContent = 'Скопировать', 1500);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+});
+
+/* =========================================================
+   ПОЛУЧЕНИЕ: поиск кода в базе -> печать чека
+   ========================================================= */
+let lastReceiptData = null;
+
+$('#pickupForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const msgEl = $('#pickupMsg');
+  msgEl.className = 'msg';
+  msgEl.textContent = '';
+
+  const input = digitsOnly($('#pickupInput').value);
+
+  if (input.length !== 12) {
+    msgEl.classList.add('error');
+    msgEl.textContent = 'Код должен содержать 12 цифр';
+    return;
+  }
+
+  const db = loadDB();
+
+  if (!db[input]) {
+    msgEl.classList.add('error');
+    msgEl.textContent = 'Код не найден. Проверьте код и попробуйте снова.';
+    $('#pickupInput').value = '';
+    return;
+  }
+
+  const record = db[input];
+  const now = new Date();
+
+  lastReceiptData = { code: input, label: record.label, date: now };
+
+  printReceipt(lastReceiptData);
+
+  delete db[input];
+  saveDB(db);
+
+  const log = loadLog();
+  log.push({ type: 'out', code: input, label: record.label, date: now.toISOString() });
+  saveLog(log);
+
+  $('#pickupInput').value = '';
+  msgEl.classList.add('ok');
+  msgEl.textContent = 'Посылка найдена';
+
+  setTimeout(() => {
+    $('#giveSub').textContent =
+      `Код: ${formatCode(input)} · Чек напечатан. Передайте чек работнику.`;
+    openModal('#giveModal');
+  }, 350);
+});
+
+/* =========================================================
+   ПЕЧАТЬ ЧЕКА (с штрихкодом кода выдачи)
+   ========================================================= */
+function buildReceiptHTML({ code, label, date }){
+  const pad = n => String(n).padStart(2, '0');
+  const d = `${pad(date.getDate())}.${pad(date.getMonth()+1)}.${date.getFullYear()}`;
+  const t = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+
+  return `
+    <div class="center">
+      <div class="big">ПОСТАМАТ</div>
+      <div>Ячейка терминала №1</div>
+    </div>
+    <div class="line"></div>
+    <div><b>ЧЕК ПОЛУЧЕНИЯ</b></div>
+    <div class="line"></div>
+    <div>Дата: ${d} ${t}</div>
+    <div>Этикетка: ${label}</div>
+    <div class="line"></div>
+    <div>КОД ВЫДАЧИ:</div>
+    <div class="big">${formatCode(code)}</div>
+    <div class="center" style="margin:6px 0;">
+      <svg id="receiptBarcodeSvg"></svg>
+    </div>
+    <div class="line"></div>
+    <div class="center">Отдайте чек работнику</div>
+    <div class="center">Спасибо!</div>
+    <div class="line"></div>
+    <div class="center">***</div>
+  `;
+}
+
+function printReceipt(data){
+  const area = $('#printArea');
+  area.innerHTML = buildReceiptHTML(data);
+
+  // Рисуем штрихкод прямо внутри чека
+  const svg = area.querySelector('#receiptBarcodeSvg');
+  if (svg && typeof JsBarcode === 'function') {
+    try {
+      JsBarcode(svg, data.code, {
+        format: 'CODE128',
+        width: 1.6,
+        height: 50,
+        displayValue: false,
+        margin: 0,
+        background: '#ffffff',
+        lineColor: '#000000'
+      });
+    } catch (err) {
+      console.warn('Не удалось построить штрихкод на чеке:', err);
+    }
+  }
+
+  // Даём браузеру отрисовать SVG перед печатью
+  setTimeout(() => {
+    try { window.print(); } catch (err) { console.warn('Печать недоступна:', err); }
+  }, 120);
+}
+
+$('#btnReprint').addEventListener('click', () => {
+  if (lastReceiptData) printReceipt(lastReceiptData);
+});
+
+/* =========================================================
+   МЕЛОЧИ UX: фильтрация полей
+   ========================================================= */
+$('#pickupInput').addEventListener('input', e => {
+  // Разрешаем цифры, пробел и звёздочку
+  e.target.value = e.target.value.replace(/[^\d *]/g, '');
+});
+$('#pinInput').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g, '');
+});
+
+window.addEventListener('load', () => $('#pickupInput').focus());
+</script>
+</body>
+</html>
